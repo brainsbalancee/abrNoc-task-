@@ -26,11 +26,21 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function submit(e?: React.FormEvent) {
+  async function submit(e?: React.FormEvent, overrideEmail?: string, overridePassword?: string) {
     e?.preventDefault()
+    // Use override values if provided (one-click demo login) so we don't read
+    // stale state from the closure. React setState is async; a setTimeout
+    // callback captures the submit closure from the render when quick() was
+    // called, which has the OLD (empty) email/password.
+    const emailVal = overrideEmail ?? email
+    const passwordVal = overridePassword ?? password
+    if (!emailVal || !passwordVal) {
+      setError('Enter your staff email and password.')
+      return
+    }
     setLoading(true)
     setError(null)
-    const res = await signIn('credentials', { email, password, redirect: false })
+    const res = await signIn('credentials', { email: emailVal, password: passwordVal, redirect: false })
     setLoading(false)
     if (res?.error) {
       setError('Invalid credentials. Try a demo account below — all passwords are "demo1234".')
@@ -41,9 +51,11 @@ function LoginForm() {
   }
 
   function quick(em: string) {
+    // Update the visible fields for UX continuity, but pass credentials
+    // directly to submit so they're never read from stale state.
     setEmail(em)
     setPassword('demo1234')
-    setTimeout(() => submit(), 50)
+    submit(undefined, em, 'demo1234')
   }
 
   return (
