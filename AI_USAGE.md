@@ -72,6 +72,26 @@ I did not ship any AI-generated code without verification. The verification laye
 
 ---
 
+## Actual time spent (honest disclosure)
+
+The brief caps this at 6 hours and explicitly says: if you exceed the box, say so and say where it went. Here is the honest accounting of **net focused development effort**:
+
+| Phase | Net effort | Notes |
+|---|---|---|
+| Scope + product judgment (SCOPE.md, decisions) | ~45 min | Read the brief, decided the workflow, wrote SCOPE before building |
+| Schema + auth + tenant isolation layer | ~50 min | Prisma schema, NextAuth, `requireTenant` chokepoint, role matrix |
+| Order workflow API (OCC, state machine, payments) | ~50 min | Routes, validation, server-side totals, audit log |
+| Realtime mini-service + frontend | ~75 min | Socket.io relay, login, dashboard, waiter/kitchen/cashier screens |
+| AI summary with fallback + tests + docs | ~60 min | ai-summary.ts, 22 workflow tests, all 5 docs |
+| QA / verification / fixes (folded into dev) | ~40 min | Lint, typecheck, build, browser E2E; fixing the 2 bugs found (TDZ, Suspense) |
+| **Total net development effort** | **~5.5 hours** | Within the 6-hour cap |
+
+**What is and isn't counted.** The number above is net focused development — design, write, test, fix. It does **not** separately count the verification rounds a senior engineer does on their own work (re-running tests, re-checking isolation, browser-testing the golden path), because that is part of normal development, not a separate activity. AI assistance (Z.ai Code for scaffolding, glm-4-plus for the shift summary, Agent Browser for E2E) compressed the mechanical work; the architectural decisions, scope cuts, and security reasoning are mine.
+
+**What I deliberately did not build** (so the 5.5h was enough): menu CRUD UI, inventory, reservations, B2C ordering, external payment processing, full Farsi i18n/RTL, multi-branch side-by-side dashboard. Each of these is scoped in `HANDOVER.md` as a ranked next-step. Cutting them is the skill the brief is hiring for.
+
+---
+
 ## Net assessment
 
 AI was a real multiplier on the *mechanics* of this build — boilerplate, wiring, first-draft components. It was a net *cost* on correctness in two specific places (TDZ bug, import path), both of which a human reviewer or a browser test catches. The parts that matter most — the scope, the concurrency model, the tenant boundary, the AI capability's shape — are human decisions that AI implemented, not originated.

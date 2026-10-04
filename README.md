@@ -2,7 +2,7 @@
 
 A platform for Iranian cafés and restaurants. Built for the live order lifecycle: waiter → kitchen → cashier, real-time, multi-tenant, role-gated, with a defensible AI shift summary that degrades gracefully.
 
-> **Live demo:** see the Preview Panel (right side of the interface). Click **Open in New Tab** for a full-window view.
+> **Live URL:** https://a1qdu8rypvv1-d.space-z.ai (deployed over HTTPS with security headers, demo data seeded)
 >
 > **Demo credentials:** all passwords are `demo1234`. One-click login on the `/login` page.
 
@@ -216,7 +216,7 @@ One-line JSON, parseable. Levels: `info`, `warn`, `error`, `security`. Every API
 
 1. **Cross-tenant data leakage.** Handled at the application chokepoint (`tenant.ts`), with the IDOR defence (managers can't bypass branch-tenant verification) and the 404-not-403 pattern. Proved by an automated test. **What's not done:** Postgres RLS would make this database-enforced; documented as the first scaling migration.
 2. **Prompt injection via the AI summary.** The model receives only structured DB records (numbers, dish names, timestamps) — never waiter notes, never customer data. Output is rendered as text, never executed. Input is size-capped. **What's not done:** if a future feature feeds free text to the model, this needs revisiting.
-3. **Credential handling.** Passwords are bcrypt-hashed. `NEXTAUTH_SECRET` is in `.env` for dev (must be rotated for production, sourced from a secret manager). The `REALTIME_BROADCAST_TOKEN` is a shared secret between the Next.js API and the relay over localhost. The AI SDK credentials live in `/etc/.z-ai-config` (server-side, not in the repo). **What's not done:** rate-limiting on the login endpoint (brute-force protection) — should be added before real customer data.
+3. **Credential handling.** Passwords are bcrypt-hashed. `NEXTAUTH_SECRET` and `REALTIME_BROADCAST_TOKEN` are read from environment variables (`.env` locally, sourced from the platform secret manager in production). The `.env` file is gitignored and **purged from git history** (no secrets in any commit). The AI SDK credentials live in `/etc/.z-ai-config` (server-side, not in the repo). Rate limiting on login (10/min per IP) and the AI endpoint (5/min per user) is implemented.
 
 ---
 
