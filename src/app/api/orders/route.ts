@@ -19,7 +19,14 @@ export const GET = apiRoute(async (req) => {
     orderBy: { createdAt: 'desc' },
     include: {
       table: { select: { label: true } },
-      items: { orderBy: { createdAt: 'asc' } },
+      items: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          // Required by the kitchen display + waiter grid to show dish names.
+          // Without this, items render as "Unknown" on /kitchen.
+          menuItem: { select: { name: true, kitchenStation: true, nameFa: true } },
+        },
+      },
     },
     take: 100,
   })
