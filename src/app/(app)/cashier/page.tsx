@@ -32,16 +32,16 @@ export default function CashierPage() {
     enabled: !!selected,
   })
 
-  if (!activeBranchId) return <div className="text-stone-500 py-12 text-center">No branch assigned.</div>
+  if (!activeBranchId) return <div className="text-muted-foreground py-12 text-center">No branch assigned.</div>
 
   return (
     <div className="space-y-6">
       <div className="flex items-baseline justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Cashier</h1>
-          <p className="text-sm text-stone-500">Open checks. Record payment and close.</p>
+          <p className="text-sm text-muted-foreground">Open checks. Record payment and close.</p>
         </div>
-        {orders.isFetching && <Loader2 className="h-4 w-4 animate-spin text-stone-400" />}
+        {orders.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
       </div>
 
       <Card>
@@ -50,27 +50,27 @@ export default function CashierPage() {
         </CardHeader>
         <CardContent className="p-0">
           {(orders.data ?? []).length === 0 ? (
-            <div className="text-center text-stone-400 text-sm py-10">No open checks. Time for chai.</div>
+            <div className="text-center text-muted-foreground text-sm py-10">No open checks. Time for chai.</div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-border/60">
               {(orders.data ?? []).map((o) => (
-                <div key={o.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary" className="font-mono">#{o.number}</Badge>
-                    <div>
-                      <div className="text-sm font-medium">{o.table?.label ?? '—'}</div>
-                      <div className="text-xs text-stone-500">
-                        {o.items?.length ?? 0} items · opened {fmtTime(o.createdAt)}
+                <div key={o.id} className="px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Badge variant="secondary" className="font-mono shrink-0">#{o.number}</Badge>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{o.table?.label ?? '—'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {o.items?.length ?? 0} items · {fmtTime(o.createdAt)}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-sm font-semibold mr-2">{fmtToman(o.total)}</div>
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/orders/${o.id}`)}>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-sm font-semibold mr-auto sm:mr-2">{fmtToman(o.total)}</div>
+                    <Button size="sm" variant="outline" className="h-8" onClick={() => router.push(`/orders/${o.id}`)}>
                       View
                     </Button>
-                    <Button size="sm" className="bg-stone-900 hover:bg-stone-800" onClick={() => setSelected(o.id)}>
-                      <Banknote className="h-4 w-4 mr-1" /> Take payment
+                    <Button size="sm" className="h-8" onClick={() => setSelected(o.id)}>
+                      <Banknote className="h-4 w-4 mr-1" /> Pay
                     </Button>
                   </div>
                 </div>

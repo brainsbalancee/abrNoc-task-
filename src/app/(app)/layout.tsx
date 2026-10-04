@@ -75,22 +75,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-card/80 backdrop-blur-lg">
-        <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-3">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 h-14 flex items-center gap-2 sm:gap-3">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
               <ChefHat className="h-4 w-4" />
             </div>
-            <span className="font-semibold tracking-tight">Meshkī</span>
+            <span className="font-semibold tracking-tight hidden xs:inline sm:inline">Meshkī</span>
           </Link>
 
-          <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+          {/* Nav: flex-1 + min-w-0 lets it shrink and scroll horizontally on mobile */}
+          <nav className="flex-1 min-w-0 flex items-center gap-0.5 overflow-x-auto scrollbar-none">
             {nav.filter((n) => n.roles.includes(role)).map((n) => {
               const active = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href))
               return (
                 <Link
                   key={n.href}
                   href={n.href}
-                  className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition ${
                     active
                       ? 'bg-primary text-primary-foreground font-medium'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -102,9 +103,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          {/* Right cluster: shrink-0 so it never compresses; hide non-essential on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* Realtime indicator — desktop only (mobile has polling fallback) */}
             <div
-              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md"
+              className="hidden sm:flex items-center gap-1.5 text-xs px-2 py-1 rounded-md"
               title={connected ? 'Realtime connected' : 'Realtime disconnected — falling back to polling'}
             >
               {connected ? (
@@ -114,12 +117,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {branches.filter((b) => b.accessible).length > 0 && (
-              <div className="relative">
+            {/* Branch selector — tablet+ only (managers typically use larger screens) */}
+            {branches.filter((b) => b.accessible).length > 1 && (
+              <div className="relative hidden sm:block">
                 <select
                   value={activeBranchId ?? ''}
                   onChange={(e) => setActiveBranchId(e.target.value)}
-                  className="appearance-none text-xs border border-border/60 rounded-md pl-2.5 pr-7 py-1.5 bg-card text-foreground cursor-pointer hover:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="appearance-none text-xs border border-border/60 rounded-md pl-2.5 pr-7 py-1.5 bg-card text-foreground cursor-pointer hover:border-border focus:outline-none focus:ring-1 focus:ring-ring max-w-[120px] truncate"
                 >
                   {branches.filter((b) => b.accessible).map((b) => (
                     <option key={b.id} value={b.id}>{b.name}</option>
@@ -131,21 +135,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
             <ThemeToggle />
 
-            <div className="flex items-center gap-2 pl-2 ml-1 border-l border-border/60">
-              <div className="text-right hidden sm:block">
+            <div className="flex items-center gap-2 pl-1.5 sm:pl-2 sm:ml-1 sm:border-l sm:border-border/60">
+              <div className="text-right hidden md:block">
                 <div className="text-xs font-medium leading-tight">{session.user.name}</div>
                 <div className="text-[10px] text-muted-foreground leading-tight">{ROLE_LABEL[role]}</div>
               </div>
-              <span className={`text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded ${ROLE_BADGE[role] ?? 'bg-muted text-muted-foreground'}`}>
+              <span className={`hidden sm:inline text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded ${ROLE_BADGE[role] ?? 'bg-muted text-muted-foreground'}`}>
                 {role}
               </span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  // redirect:false — we control navigation ourselves. Avoids a
-                  // crash when the realtime socket tears down mid-redirect, and
-                  // avoids the NEXTAUTH_URL localhost-redirect problem.
                   signOut({ redirect: false }).then(() => {
                     router.push('/login')
                     router.refresh()
@@ -162,7 +163,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-6">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-3 sm:px-4 py-6">
         <AppContext.Provider value={{ activeBranchId, role, userId: session.user.id, realtimeTick }}>
           {children}
         </AppContext.Provider>

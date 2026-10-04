@@ -51,12 +51,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl grid lg:grid-cols-[1fr_1.05fr] gap-6 items-stretch">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-5xl grid lg:grid-cols-[1fr_1.05fr] gap-4 sm:gap-6 items-stretch min-w-0">
         {/* Brand panel — elegant in BOTH themes.
             Uses bg-card + ring + saffron accents (not bg-primary which inverts
             awkwardly in dark mode). The radial saffron glow gives warmth. */}
-        <div className="hidden lg:flex flex-col justify-between rounded-2xl bg-card border border-border/60 p-8 relative overflow-hidden">
+        <div className="hidden lg:flex flex-col justify-between rounded-2xl bg-card border border-border/60 p-8 relative overflow-hidden min-w-0">
           {/* Warm saffron radial glow — works on both light cream and dark charcoal */}
           <div
             className="absolute inset-0 opacity-60 pointer-events-none"
@@ -100,7 +100,7 @@ function LoginForm() {
         </div>
 
         {/* Login form */}
-        <Card className="border-border/60 shadow-sm self-center w-full">
+        <Card className="border-border/60 shadow-sm self-center w-full min-w-0 overflow-hidden">
           <CardHeader className="space-y-3">
             <div className="flex items-center gap-2 lg:hidden">
               <div className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">

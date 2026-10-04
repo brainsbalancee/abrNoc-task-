@@ -90,7 +90,7 @@ export default function MenuPage() {
       </div>
 
       {/* Search */}
-      <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-lg border-b border-border/40">
+      <div className="sticky top-14 z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/80 backdrop-blur-lg border-b border-border/40">
         <div className="relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
