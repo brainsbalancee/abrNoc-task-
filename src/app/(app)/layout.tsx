@@ -141,7 +141,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => {
+                  // redirect:false — we control navigation ourselves. Avoids a
+                  // crash when the realtime socket tears down mid-redirect, and
+                  // avoids the NEXTAUTH_URL localhost-redirect problem.
+                  signOut({ redirect: false }).then(() => {
+                    router.push('/login')
+                    router.refresh()
+                  })
+                }}
                 className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                 title="Sign out"
                 aria-label="Sign out"
