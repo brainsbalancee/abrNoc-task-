@@ -203,27 +203,36 @@ export default function OrderDetailPage() {
         {canEdit && o.status === 'OPEN' && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Add items</CardTitle>
+              <CardTitle className="text-base flex items-center justify-between">
+                <span>Add items</span>
+                <span className="text-xs font-normal text-muted-foreground">{(menu.data ?? []).reduce((s: number, c: any) => s + (c.items?.length ?? 0), 0)} dishes</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[60vh] pr-3">
-                <div className="space-y-4">
-                  {(menu.data ?? []).map((cat) => (
+                <div className="space-y-5">
+                  {(menu.data ?? []).map((cat: any) => (
                     <div key={cat.id}>
-                      <div className="text-xs font-semibold uppercase tracking-wide text-stone-500 mb-1.5">{cat.name}</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-1 w-1 rounded-full bg-primary" />
+                        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{cat.name}</div>
+                      </div>
                       <div className="space-y-1">
                         {cat.items?.map((it: any) => (
-                          <div key={it.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-stone-50 border border-transparent hover:border-stone-200">
+                          <div key={it.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/50 border border-transparent hover:border-border/60 transition">
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm truncate">{it.name}</div>
-                              <div className="text-[10px] text-stone-400">{fmtToman(it.price)}</div>
+                              <div className="text-sm truncate font-medium">{it.name}</div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-muted-foreground font-mono">{fmtToman(it.price)}</span>
+                                {it.nameFa && <span className="text-[10px] text-muted-foreground/70" dir="rtl" lang="fa">{it.nameFa}</span>}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 shrink-0">
                               <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => setQtyMap((m) => ({ ...m, [it.id]: Math.max(0, (m[it.id] ?? 0) - 1) }))}>
                                 <Minus className="h-3 w-3" />
                               </Button>
                               <Input
-                                className="h-7 w-10 text-center px-0"
+                                className="h-7 w-10 text-center px-0 font-mono"
                                 value={qtyMap[it.id] ?? 0}
                                 onChange={(e) => setQtyMap((m) => ({ ...m, [it.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
                               />
@@ -239,11 +248,11 @@ export default function OrderDetailPage() {
                 </div>
               </ScrollArea>
               <div className="mt-3 flex gap-2">
-                <Button className="flex-1 bg-stone-900 hover:bg-stone-800" onClick={addItems}>
+                <Button className="flex-1" onClick={addItems}>
                   <Plus className="h-4 w-4 mr-1" /> Add to check
                 </Button>
               </div>
-              <p className="text-[10px] text-stone-400 mt-1">
+              <p className="text-[10px] text-muted-foreground mt-1.5">
                 Adding items is append-only — two waiters can add to the same check without losing each other's work.
               </p>
             </CardContent>
@@ -252,7 +261,7 @@ export default function OrderDetailPage() {
 
         {!canEdit && (
           <Card className="p-6">
-            <div className="text-sm text-stone-500">
+            <div className="text-sm text-muted-foreground">
               {role === 'KITCHEN' && <div className="flex items-center gap-2"><ChefHat className="h-4 w-4" /> You are viewing in Kitchen mode. Use the Kitchen display to advance items.</div>}
               {role === 'CASHIER' && <div>Use the Cashier page to take payment and close this check.</div>}
             </div>

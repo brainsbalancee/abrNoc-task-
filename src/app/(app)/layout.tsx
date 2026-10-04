@@ -68,6 +68,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: '/waiter', label: 'Waiter', roles: ['WAITER', 'MANAGER'] },
     { href: '/kitchen', label: 'Kitchen', roles: ['KITCHEN', 'MANAGER'] },
     { href: '/cashier', label: 'Cashier', roles: ['CASHIER', 'MANAGER'] },
+    { href: '/menu', label: 'Menu', roles: ['MANAGER', 'WAITER', 'KITCHEN', 'CASHIER'] },
     { href: '/reports', label: 'Reports', roles: ['MANAGER'] },
   ]
 

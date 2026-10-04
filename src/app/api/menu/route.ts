@@ -2,7 +2,8 @@ import { db } from '@/lib/db'
 import { requireTenant } from '@/lib/tenant'
 import { apiRoute, ok } from '@/lib/api-utils'
 
-// GET /api/menu — the tenant's menu (categories + items). Read-only for staff.
+// GET /api/menu — the tenant's full menu (categories + items with Persian names).
+// Used by the /menu page (digital menu card) and the waiter item picker.
 export const GET = apiRoute(async () => {
   const ctx = await requireTenant()
   const cats = await db.menuCategory.findMany({
@@ -11,7 +12,14 @@ export const GET = apiRoute(async () => {
     include: {
       items: {
         where: { active: true },
-        orderBy: { name: 'asc' },
+        orderBy: { price: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          nameFa: true,
+          price: true,
+          kitchenStation: true,
+        },
       },
     },
   })
