@@ -52,3 +52,23 @@ Stage Summary:
 - Live URL via Preview Panel. Demo credentials: all passwords `demo1234`.
 - 22 tests pass, lint clean, both services (Next.js :3000, realtime :3003+:3004) running.
 - All assessment parts delivered: SCOPE.md, product (order lifecycle + AI summary + real-time + isolation), DECISIONS.md, AI_USAGE.md, HANDOVER.md, README.md, tests.
+
+---
+Task ID: AUDIT
+Agent: main (Z.ai Code) — skeptical senior engineer review
+Task: Full audit against the master verification checklist, fix defects, retest
+
+Work Log:
+- BASELINE: lint clean, but tsc had 2 real errors in my code (api-utils.ts params Promise cast, items/route.ts never[] inference). 22 tests pass.
+- P0 FOUND: `.env` (with NEXTAUTH_SECRET) and `db/custom.db` (with bcrypt password hashes) were tracked in git — committed before .gitignore was added. FIXED: git rm --cached, created .env.example with placeholders, added db/*.db to .gitignore.
+- P0 FOUND: `bun test` destroyed demo data — the test's beforeAll ran deleteMany() on the demo DB. A reviewer running tests would break every demo login. FIXED: tests now use db/test.db via a bunfig.toml preload (tests/setup.ts) that sets DATABASE_URL before any module loads. Demo DB never touched by tests.
+- P1 FIXED: TypeScript errors in api-utils.ts (params Promise type) and items/route.ts (newItems never[]). Added bun-types to tsconfig. tsc --noEmit now clean.
+- P1 ADDED: 20 new API-boundary tests (tests/api-isolation.test.ts) using real NextAuth sessions against the running dev server: 12 cross-tenant isolation tests (forged order IDs, nested resource access, cross-tenant menu injection, mass assignment, unauthenticated, shift summary forgery), 3 real concurrency tests (Promise.all of simultaneous PATCHes — one wins 200, one gets 409), 5 validation tests (illegal transitions, balance check, no-payment close, duplicate open check, role enforcement).
+- P1 ADDED: Security headers via next.config.ts (X-Frame-Options DENY, CSP, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy).
+- P1 ADDED: Rate limiting on login (10/min per IP, 200/min localhost for dev/tests) and AI summary endpoint (5/min per user). In-memory, documented as process-local (multi-instance needs Redis).
+- VERIFIED: 42 tests pass (22 workflow + 20 API isolation/concurrency). Lint clean. Typecheck clean. Demo data intact (8 users) after full test run. All 5 demo roles login successfully. Security headers present. Rate limiter triggers (5 events logged after 12 brute-force attempts).
+
+Stage Summary:
+- All P0/P1 defects found and fixed. No critical security or data-integrity issues remain.
+- Test count: 22 → 42 (20 new API/concurrency tests).
+- Remaining documented risks: in-memory rate limiter (process-local, not multi-instance safe — documented), no Postgres RLS (app-layer isolation only — documented as first scaling migration), order number race condition (documented in DECISIONS.md).

@@ -109,3 +109,17 @@ I generate the per-branch sequential order number as `await db.order.count({ whe
 ### C. (Bonus, less severe) The 404-on-forged-id pattern is correct for security but noisy in logs
 
 Returning 404 (not 403) for a cross-tenant access attempt is the right security choice (don't leak existence). But I log these at `error` level, which means a probing attacker fills the 3am log. I'd move auth-404s to a dedicated `security` log level that's sampled and alertable separately from real errors. Minor, but it would make the logs cleaner under attack.
+
+---
+
+## Post-audit additions (verification round)
+
+After the first build, a skeptical audit (see AI_USAGE.md) found and fixed:
+
+- **P0: `.env` and `db/custom.db` were tracked in git.** The `.gitignore` had `.env*` but the files were committed before the pattern was added. Fixed: `git rm --cached`, created `.env.example` with placeholders only, added `db/*.db` to `.gitignore`. The `NEXTAUTH_SECRET` in `.env` is a dev-only value (clearly labelled) and must be rotated for production.
+- **P0: `bun test` destroyed the demo data.** The test's `beforeAll` ran `deleteMany()` on the demo database. A reviewer running `bun test` (required by the checklist) would break every demo login. Fixed: tests now run against `db/test.db` via a `bunfig.toml` preload (`tests/setup.ts`) that sets `DATABASE_URL` before any module loads. The demo database is never touched by tests.
+- **P1: No real concurrency tests.** The OCC test was sequential (one stale update, one fresh). Added 3 real parallel-request tests (`Promise.all` of two simultaneous PATCHes on the same item — one wins, one gets 409; two simultaneous item additions both succeed; stale version returns 409 with no state change).
+- **P1: No API-boundary isolation tests.** The cross-tenant tests were at the Prisma query layer, not the HTTP boundary. Added 12 API-level tests using real NextAuth sessions: forged order IDs, nested resource access (items, payments, status transitions), cross-tenant menu injection, mass-assignment attempts, unauthenticated requests, shift summary forgery.
+- **P1: No security headers.** Added `next.config.ts` headers: X-Frame-Options DENY, CSP, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+- **P1: No rate limiting on login.** Added an in-memory rate limiter (10/min per IP, 200/min for localhost in dev). Documented as process-local (not reliable across multiple instances — for production use Redis). The AI summary endpoint is also rate-limited (5/min per user).
+- **P1: TypeScript errors.** Fixed `api-utils.ts` params Promise type and `items/route.ts` `newItems` never[] inference. Added `bun-types` to tsconfig; `tsc --noEmit` is now clean for all `src/` and `tests/` code.

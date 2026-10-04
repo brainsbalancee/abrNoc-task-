@@ -3,15 +3,21 @@ import { requireTenant } from '@/lib/tenant'
 import { can } from '@/lib/roles'
 import { apiRoute, ok, fail } from '@/lib/api-utils'
 import { generateShiftSummary } from '@/lib/ai-summary'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 // POST /api/reports/shift-summary?shiftId=...
 // Regenerate the AI summary for a shift (e.g. if the first run fell back).
-export const POST = apiRoute(async (req) => {
+// Rate-limited: 5 regenerations per minute per user (AI calls cost money).
+export const POST = apiRoute(async (req, { params }) => {
   const url = new URL(req.url)
   const shiftId = url.searchParams.get('shiftId')
   if (!shiftId) return fail('shiftId required', 400)
   const ctx = await requireTenant()
   if (!can(ctx.role, 'reports:read')) return fail('Your role cannot read reports', 403)
+
+  // Rate limit AI regeneration: 5/min/user.
+  const rl = rateLimit(`ai-regen:${ctx.userId}`, 5, 60_000)
+  if (!rl.ok) return fail('Too many requests; wait a minute and retry', 429)
 
   // Verify ownership.
   const shift = await db.shift.findFirst({

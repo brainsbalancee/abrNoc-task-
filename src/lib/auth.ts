@@ -2,9 +2,12 @@ import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
+import { loginRateLimit } from '@/lib/rate-limit'
 
 // NextAuth configuration. Credentials provider against our own user table.
 // Passwords are bcrypt-hashed. Sessions are JWT (stateless) — fits serverless.
+// Rate limiting on login is enforced in authorize() via an in-memory limiter
+// (process-local — see rate-limit.ts for the multi-instance caveat).
 
 declare module 'next-auth' {
   interface Session {
@@ -49,8 +52,25 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null
+
+        // Rate limit: 10 login attempts per minute per IP. On limit, return
+        // null (indistinguishable from a wrong password — do not leak that
+        // the limiter triggered).
+        const headers = (req as any)?.headers || {}
+        const xff = headers['x-forwarded-for'] || headers.get?.('x-forwarded-for')
+        const xri = headers['x-real-ip'] || headers.get?.('x-real-ip')
+        const ip = (xff && String(xff).split(',')[0].trim()) || (xri && String(xri)) || 'local'
+        const rl = loginRateLimit(ip)
+        if (!rl.ok) {
+          console.log(JSON.stringify({
+            level: 'warn', event: 'login_rate_limited', ip,
+            resetAt: new Date(rl.resetAt).toISOString(), ts: new Date().toISOString(),
+          }))
+          return null
+        }
+
         const user = await db.user.findUnique({
           where: { email: credentials.email.toLowerCase() },
           include: {

@@ -45,7 +45,7 @@ export const POST = apiRoute(async (req, { params }) => {
 
   // Create items inside a transaction with totals recompute.
   const created = await db.$transaction(async (tx) => {
-    const newItems = []
+    const newItems: Awaited<ReturnType<typeof tx.orderItem.create>>[] = []
     for (const it of parsed.data.items) {
       const mi = menuItems.find((m) => m.id === it.menuItemId)!
       const item = await tx.orderItem.create({

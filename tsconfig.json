@@ -15,7 +15,9 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "isolatedModules": true,
+    "types": [
+      "bun-types"
+    ],
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
@@ -27,16 +29,19 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "isolatedModules": true
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "bun-types"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "skills"
   ]
 }

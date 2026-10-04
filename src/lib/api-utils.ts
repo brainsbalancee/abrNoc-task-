@@ -16,13 +16,13 @@ export function fail(message: string, status = 400, extra?: Record<string, unkno
 }
 
 // Wrap a route handler so errors are handled consistently and logged once.
+// Next.js 16 passes params as a Promise; we await it before handing to the
+// handler, so handlers can treat params as a plain record.
 type Handler = (req: Request, ctx: { params: Record<string, string> }) => Promise<unknown>
 
-export function apiRoute(handler: Handler): (req: Request, ctx: { params: Promise<Record<string, string>> } | Record<string, string>) => Promise<Response> {
-  return async (req, ctxRaw) => {
-    const params = (ctxRaw as { params: Promise<Record<string, string>> })?.params instanceof Promise
-      ? await (ctxRaw as { params: Promise<Record<string, string>> }).params
-      : (ctxRaw as { params: Record<string, string> }).params
+export function apiRoute(handler: Handler): (req: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response> {
+  return async (req, ctx) => {
+    const params = ctx?.params instanceof Promise ? await ctx.params : (ctx?.params ?? {})
     const started = Date.now()
     const corrId = Math.random().toString(36).slice(2, 10)
     try {

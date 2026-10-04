@@ -28,6 +28,14 @@
 //     sanitised, which is the engineering contract that matters.
 
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
+import { execSync } from 'child_process'
+
+// The test database is configured in tests/setup.ts (loaded via bunfig.toml
+// preload). This ensures tests NEVER touch the demo database (db/custom.db).
+// All imports below — including `@/lib/ai-summary` which uses the `@/lib/db`
+// singleton — read DATABASE_URL=...db/test.db because the preload set it
+// before any module was evaluated.
+
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import {
@@ -53,7 +61,18 @@ let saffronUser: { id: string }
 let shandizShift: { id: string }
 
 beforeAll(async () => {
-  // Clean any prior test data (idempotent).
+  // Ensure the test database schema exists. This is idempotent and fast.
+  try {
+    execSync('bunx prisma db push --skip-generate --accept-data-loss', {
+      stdio: 'pipe',
+      env: { ...process.env },
+    })
+  } catch {
+    // If push fails (e.g., prisma not on PATH), fall back silently — the
+    // queries below will fail loudly if the schema is missing.
+  }
+
+  // Clean any prior test data (idempotent, against the test DB only).
   await db.payment.deleteMany()
   await db.orderItem.deleteMany()
   await db.order.deleteMany()
