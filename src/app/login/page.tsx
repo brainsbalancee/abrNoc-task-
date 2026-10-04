@@ -53,47 +53,65 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-5xl grid lg:grid-cols-[1fr_1.05fr] gap-4 sm:gap-6 items-stretch min-w-0">
-        {/* Brand panel — elegant in BOTH themes.
-            Uses bg-card + ring + saffron accents (not bg-primary which inverts
-            awkwardly in dark mode). The radial saffron glow gives warmth. */}
-        <div className="hidden lg:flex flex-col justify-between rounded-2xl bg-card border border-border/60 p-8 relative overflow-hidden min-w-0">
-          {/* Warm saffron radial glow — works on both light cream and dark charcoal */}
+        {/* Brand panel — restaurant interior image with saffron-tinted overlay.
+            Works in both themes: the overlay darkens the image enough for
+            white text readability in light mode, and blends with charcoal in dark. */}
+        <div className="hidden lg:flex flex-col justify-between rounded-2xl border border-border/60 p-8 relative overflow-hidden min-w-0">
+          {/* Background photo */}
+          <img
+            src="/login-hero.webp"
+            alt="Restaurant interior with warm wood paneling and green leather booths"
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+          {/* Saffron-tinted gradient overlay — gives brand warmth + text contrast.
+              In dark mode the overlay is darker; in light mode it's lighter. */}
           <div
-            className="absolute inset-0 opacity-60 pointer-events-none"
+            className="absolute inset-0"
             style={{
-              backgroundImage: [
-                'radial-gradient(circle at 25% 15%, oklch(0.55 0.14 65deg / 0.18) 0%, transparent 45%)',
-                'radial-gradient(circle at 75% 85%, oklch(0.72 0.15 70deg / 0.12) 0%, transparent 45%)',
+              background: [
+                'linear-gradient(135deg, oklch(0.18 0.01 50deg / 0.92) 0%, oklch(0.22 0.02 60deg / 0.75) 50%, oklch(0.55 0.14 65deg / 0.55) 100%)',
               ].join(', '),
             }}
           />
-          <div className="relative">
+          {/* Subtle saffron glow accents on top of the image */}
+          <div
+            className="absolute inset-0 opacity-40 pointer-events-none mix-blend-screen"
+            style={{
+              backgroundImage: [
+                'radial-gradient(circle at 25% 15%, oklch(0.72 0.15 70deg / 0.25) 0%, transparent 45%)',
+                'radial-gradient(circle at 75% 85%, oklch(0.72 0.15 70deg / 0.15) 0%, transparent 45%)',
+              ].join(', '),
+            }}
+          />
+          {/* Content sits above the image */}
+          <div className="relative text-primary-foreground">
             <div className="flex items-center gap-2.5 mb-8">
-              <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+              <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 backdrop-blur flex items-center justify-center shadow-sm">
                 <ChefHat className="h-5 w-5" />
               </div>
               <span className="font-semibold text-xl tracking-tight">Meshkī</span>
             </div>
-            <h1 className="text-3xl font-bold leading-tight mb-3 tracking-tight">
+            <h1 className="text-3xl font-bold leading-tight mb-3 tracking-tight drop-shadow-lg">
               The order lifecycle,<br/>
-              <span className="text-primary">finished and defensible.</span>
+              <span className="text-amber-200">finished and defensible.</span>
             </h1>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
+            <p className="text-primary-foreground/80 text-sm leading-relaxed max-w-sm drop-shadow">
               Waiter, kitchen, cashier — real-time, multi-tenant, role-gated.
               Built for Iranian restaurants. One workflow, every shift.
             </p>
           </div>
-          <div className="relative space-y-2.5 mt-8">
+          <div className="relative space-y-2.5 mt-8 text-primary-foreground">
             {[
               { label: 'Real-time kitchen display', icon: Flame },
               { label: 'Optimistic concurrency on every order', icon: ShieldCheck },
               { label: 'AI shift summary with graceful fallback', icon: Sparkles },
             ].map((f) => (
               <div key={f.label} className="flex items-center gap-2.5 text-sm">
-                <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <div className="h-7 w-7 rounded-md bg-primary-foreground/15 backdrop-blur flex items-center justify-center shrink-0">
                   <f.icon className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-foreground/80">{f.label}</span>
+                <span className="text-primary-foreground/90 drop-shadow">{f.label}</span>
               </div>
             ))}
           </div>
