@@ -1,0 +1,285 @@
+// Meshkī — Restaurant Platform Prisma Schema
+// Domain-driven: models reflect the restaurant domain, not the screens.
+// The tenant boundary is Restaurant. Every tenant-scoped model carries tenantId.
+// SQLite has no native enums — status fields are String, validated in the app layer
+// via a central state-machine module (see src/lib/order-state.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// TENANCY
+// ────────────────────────────────────────────────────────────────────────────
+
+/// A Restaurant is the hard tenant boundary. Restaurant A can never reach
+/// Restaurant B's data — enforced at the data-access layer (src/lib/tenant.ts).
+model Restaurant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique // URL-friendly identifier, also used in logs
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branches Branch[]
+  users    User[]
+  // Tenant-scoped shared data
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+}
+
+/// A Restaurant may have more than one Branch. Staff are assigned to one or
+/// more branches. Orders, tables, and shifts live at the branch level.
+model Branch {
+  id         String   @id @default(cuid())
+  tenantId   String   // the Restaurant id — the hard isolation key
+  name       String
+  address    String?
+  taxRate    Int      @default(0) // percent, applied to order subtotal. 0 = tax-included by default (Iran norm)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  tables   Table[]
+  orders   Order[]
+  shifts   Shift[]
+  staff    UserBranch[]
+
+  @@index([tenantId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// USERS & ROLES
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Minimal role set: MANAGER, WAITER, KITCHEN, CASHIER. Defined as a string
+/// and validated in the app because SQLite has no enum type.
+model User {
+  id            String   @id @default(cuid())
+  tenantId      String
+  email         String   @unique
+  name          String
+  // bcrypt hash. Never logged, never returned by the API.
+  passwordHash  String
+  role          String   @default("WAITER") // MANAGER | WAITER | KITCHEN | CASHIER
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branches   UserBranch[]
+  orders      Order[]    // orders created by this waiter
+  auditLogs   AuditLog[]
+
+  @@index([tenantId])
+}
+
+/// Many-to-many between Users and Branches. A waiter may work at two branches
+/// of the same restaurant. They still cannot see any other restaurant.
+model UserBranch {
+  id        String   @id @default(cuid())
+  userId    String
+  branchId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, branchId])
+  @@index([branchId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// MENU (tenant-scoped, shared across branches — menu is a restaurant concept)
+// ────────────────────────────────────────────────────────────────────────────
+
+model MenuCategory {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String   // e.g. "Kebabs", "Stews", "Drinks"
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+
+  restaurant Restaurant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items      MenuItem[]
+
+  @@index([tenantId])
+}
+
+model MenuItem {
+  id         String   @id @default(cuid())
+  tenantId   String
+  categoryId String
+  name       String   // authentic dish name, e.g. "Chelo Kebab Koobideh"
+  nameFa     String?  // Persian script name (for future i18n)
+  price      Int      // integer Toman
+  active     Boolean  @default(true)
+  kitchenStation String @default("main") // kitchen routing hint
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  restaurant Restaurant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([tenantId])
+  @@index([categoryId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// TABLES (branch-scoped physical tables)
+// ────────────────────────────────────────────────────────────────────────────
+
+model Table {
+  id        String   @id @default(cuid())
+  branchId  String
+  tenantId  String
+  label     String   // "T1", "T2", or "Patio 3"
+  seats     Int      @default(4)
+  active    Boolean  @default(true)
+
+  branch Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  orders  Order[]
+
+  @@index([branchId])
+  @@index([tenantId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// ORDERS — the heart of the workflow
+// ────────────────────────────────────────────────────────────────────────────
+
+/// An Order is a check for a table during a shift. version = optimistic lock.
+model Order {
+  id           String   @id @default(cuid())
+  tenantId     String
+  branchId     String
+  shiftId      String?
+  tableId      String?
+  number       Int      // human-friendly per-branch sequential number, e.g. #1042
+  status       String   @default("OPEN") // OPEN | CLOSED | VOIDED
+  // Money fields — all integer Toman
+  subtotal     Int      @default(0)  // sum of item lines
+  discountAmount Int     @default(0)  // flat Toman discount
+  serviceRate  Int      @default(0)  // percent applied to (subtotal - discount)
+  taxRate      Int      @default(0)  // percent applied (branch default copied at creation)
+  total        Int      @default(0)  // computed server-side, never trusted from client
+  notes        String?
+  // Concurrency control
+  version      Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  closedAt     DateTime?
+
+  waiterId String?
+  waiter   User?   @relation(fields: [waiterId], references: [id])
+
+  branch Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  shift  Shift?  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  table  Table?  @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  items  OrderItem[]
+  payments Payment[]
+  // AuditLog entries reference this order generically via targetId (no FK).
+
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([shiftId])
+  @@index([status])
+}
+
+/// OrderItem status is a state machine (see src/lib/order-state.ts):
+/// PENDING → PREPARING → READY → SERVED
+/// PENDING → CANCELLED  (only pending items can be voided)
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  menuItemId String
+  tenantId  String
+  quantity  Int      @default(1)
+  unitPrice Int      // copied from MenuItem at creation — price snapshot
+  notes     String?  // "no onion", "extra spicy"
+  status    String   @default("PENDING") // PENDING | PREPARING | READY | SERVED | CANCELLED
+  version   Int      @default(0) // optimistic lock on status transitions
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem  @relation(fields: [menuItemId], references: [id])
+  // tenantId is a denormalized scalar only (no direct relation to Restaurant);
+  // the authoritative tenant is the Order's branch.restaurant. Kept for
+  // fast tenant-scoped filtering without a join.
+
+  @@index([orderId])
+  @@index([status])
+  @@index([tenantId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// PAYMENTS — recorded, not processed (no card rails in Iran)
+// ────────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id        String   @id @default(cuid())
+  orderId   String
+  tenantId  String
+  method    String   // CASH | POS  (POS = local bank card terminal, recorded only)
+  amount    Int      // integer Toman
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([tenantId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// SHIFTS — the manager closes a shift, the AI summary runs against it
+// ────────────────────────────────────────────────────────────────────────────
+
+model Shift {
+  id         String   @id @default(cuid())
+  tenantId   String
+  branchId   String
+  openedBy   String
+  closedBy   String?
+  openedAt   DateTime @default(now())
+  closedAt   DateTime?
+  // Cached aggregate (computed server-side at close, not trusted from client)
+  orderCount Int      @default(0)
+  grossTotal Int      @default(0)
+  voidCount Int      @default(0)
+  // AI summary — nullable: if AI fails, a deterministic template fills this
+  aiSummary String?
+  aiModel   String?  // record which model produced it, for audit
+
+  branch Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([branchId])
+  @@index([tenantId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG — tamper-evident trail of sensitive actions
+// ────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  action    String   // e.g. "ORDER_VOIDED", "DISCOUNT_APPLIED", "SHIFT_CLOSED", "PAYMENT_RECORDED"
+  targetId  String?  // id of affected entity
+  detail    String?  // short JSON blob
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+}
