@@ -15,11 +15,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   )
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
       <NextAuthSessionProvider>
         <QueryClientProvider client={qc}>
           {children}
-          <SonnerToaster richColors position="top-center" />
+          <SonnerToaster richColors position="top-center" theme="system" />
         </QueryClientProvider>
       </NextAuthSessionProvider>
     </ThemeProvider>

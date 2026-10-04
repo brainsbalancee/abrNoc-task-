@@ -43,73 +43,82 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ── Meshkī theme: warm, earthy, Persian-inspired ────────────────────────────
+   Light: warm cream paper background, espresso ink text, saffron-amber accent.
+   Dark:  deep warm charcoal, cream text, saffron-amber accent.
+   NOT pure gray — every neutral has a subtle warm hue (chroma ~0.01–0.02). */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Surfaces */
+  --background: oklch(0.975 0.008 95deg);        /* warm cream paper */
+  --foreground: oklch(0.22 0.012 50deg);          /* espresso ink */
+  --card: oklch(0.995 0.004 95deg);              /* near-white card */
+  --card-foreground: oklch(0.22 0.012 50deg);
+  --popover: oklch(0.995 0.004 95deg);
+  --popover-foreground: oklch(0.22 0.012 50deg);
+  /* Primary = saffron-amber (the brand accent) */
+  --primary: oklch(0.55 0.14 65deg);             /* deep saffron */
+  --primary-foreground: oklch(0.98 0.008 95deg);
+  /* Secondary = warm stone */
+  --secondary: oklch(0.94 0.01 85deg);
+  --secondary-foreground: oklch(0.28 0.012 50deg);
+  --muted: oklch(0.94 0.008 85deg);
+  --muted-foreground: oklch(0.52 0.012 60deg);
+  --accent: oklch(0.92 0.025 75deg);             /* soft amber wash */
+  --accent-foreground: oklch(0.28 0.02 50deg);
+  --destructive: oklch(0.55 0.22 27deg);
+  --border: oklch(0.90 0.008 85deg);
+  --input: oklch(0.92 0.008 85deg);
+  --ring: oklch(0.55 0.14 65deg);
+  /* Charts — warm complementary palette */
+  --chart-1: oklch(0.60 0.18 45deg);             /* saffron */
+  --chart-2: oklch(0.50 0.12 160deg);            /* pistachio green */
+  --chart-3: oklch(0.45 0.15 280deg);            /* plum */
+  --chart-4: oklch(0.70 0.16 85deg);             /* turmeric */
+  --chart-5: oklch(0.55 0.20 12deg);             /* sumac red */
+  /* Sidebar */
+  --sidebar: oklch(0.97 0.006 95deg);
+  --sidebar-foreground: oklch(0.22 0.012 50deg);
+  --sidebar-primary: oklch(0.55 0.14 65deg);
+  --sidebar-primary-foreground: oklch(0.98 0.008 95deg);
+  --sidebar-accent: oklch(0.92 0.025 75deg);
+  --sidebar-accent-foreground: oklch(0.28 0.02 50deg);
+  --sidebar-border: oklch(0.90 0.008 85deg);
+  --sidebar-ring: oklch(0.55 0.14 65deg);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --background: oklch(0.18 0.008 50deg);          /* deep warm charcoal */
+  --foreground: oklch(0.93 0.008 85deg);         /* warm cream */
+  --card: oklch(0.22 0.01 50deg);
+  --card-foreground: oklch(0.93 0.008 85deg);
+  --popover: oklch(0.22 0.01 50deg);
+  --popover-foreground: oklch(0.93 0.008 85deg);
+  --primary: oklch(0.72 0.15 70deg);             /* brighter saffron for dark bg */
+  --primary-foreground: oklch(0.18 0.01 50deg);
+  --secondary: oklch(0.27 0.012 50deg);
+  --secondary-foreground: oklch(0.93 0.008 85deg);
+  --muted: oklch(0.25 0.01 50deg);
+  --muted-foreground: oklch(0.68 0.012 60deg);
+  --accent: oklch(0.30 0.025 60deg);
+  --accent-foreground: oklch(0.93 0.008 85deg);
+  --destructive: oklch(0.65 0.20 25deg);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.72 0.15 70deg);
+  --chart-1: oklch(0.68 0.18 55deg);
+  --chart-2: oklch(0.60 0.14 160deg);
+  --chart-3: oklch(0.55 0.16 280deg);
+  --chart-4: oklch(0.72 0.16 85deg);
+  --chart-5: oklch(0.62 0.20 15deg);
+  --sidebar: oklch(0.22 0.01 50deg);
+  --sidebar-foreground: oklch(0.93 0.008 85deg);
+  --sidebar-primary: oklch(0.72 0.15 70deg);
+  --sidebar-primary-foreground: oklch(0.18 0.01 50deg);
+  --sidebar-accent: oklch(0.30 0.025 60deg);
+  --sidebar-accent-foreground: oklch(0.93 0.008 85deg);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.72 0.15 70deg);
 }
 
 @layer base {
@@ -118,5 +127,27 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Subtle warm texture via background gradient — very faint */
+    background-image: radial-gradient(circle at 20% 0%, oklch(0.55 0.14 65 / 0.03) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image: radial-gradient(circle at 20% 0%, oklch(0.72 0.15 70 / 0.04) 0%, transparent 50%);
+  }
+  /* Smooth theme transition */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+  /* Scrollbar — warm themed */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
   }
 }

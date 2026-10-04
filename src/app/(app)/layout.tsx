@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChefHat, LogOut, Radio, Wifi, WifiOff } from 'lucide-react'
+import { ChefHat, LogOut, Wifi, WifiOff, ChevronDown } from 'lucide-react'
 import { api } from '@/lib/client'
 import { useRealtime } from '@/hooks/use-realtime'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface Branch { id: string; name: string; accessible: boolean }
 
@@ -17,6 +18,13 @@ const ROLE_LABEL: Record<string, string> = {
   CASHIER: 'Cashier',
 }
 
+const ROLE_BADGE: Record<string, string> = {
+  MANAGER: 'bg-primary/15 text-primary',
+  WAITER: 'bg-chart-2/15 text-chart-2',
+  KITCHEN: 'bg-chart-5/15 text-chart-5',
+  CASHIER: 'bg-chart-4/15 text-chart-4',
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const pathname = usePathname()
@@ -25,12 +33,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [activeBranchId, setActiveBranchId] = useState<string | null>(null)
   const [realtimeTick, setRealtimeTick] = useState(0)
 
-  // Redirect to login if unauthenticated.
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
   }, [status, router])
 
-  // Load branches.
   useEffect(() => {
     if (status !== 'authenticated') return
     api<Branch[]>('/api/branches').then((r) => {
@@ -43,8 +49,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }).catch(() => {})
   }, [status, session?.user?.activeBranchId])
 
-  // Realtime: when a branch event arrives, bump a tick so children can
-  // refetch via the `key` prop trick or their own subscriptions.
   const { connected } = useRealtime(activeBranchId, () => {
     setRealtimeTick((t) => t + 1)
   })
@@ -52,7 +56,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-stone-400">Loading…</div>
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
       </div>
     )
   }
@@ -67,22 +71,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: '/reports', label: 'Reports', roles: ['MANAGER'] },
   ]
 
-  function switchBranch(id: string) {
-    setActiveBranchId(id)
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
-      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-4">
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-card/80 backdrop-blur-lg">
+        <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-7 w-7 rounded-md bg-stone-900 text-amber-50 flex items-center justify-center">
+            <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
               <ChefHat className="h-4 w-4" />
             </div>
-            <span className="font-semibold">Meshkī</span>
+            <span className="font-semibold tracking-tight">Meshkī</span>
           </Link>
 
-          <nav className="flex items-center gap-1 overflow-x-auto">
+          <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
             {nav.filter((n) => n.roles.includes(role)).map((n) => {
               const active = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href))
               return (
@@ -90,7 +90,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   key={n.href}
                   href={n.href}
                   className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition ${
-                    active ? 'bg-stone-900 text-amber-50' : 'text-stone-600 hover:bg-stone-100'
+                    active
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
                 >
                   {n.label}
@@ -99,57 +101,68 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2">
             <div
-              className="flex items-center gap-1.5 text-xs"
+              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md"
               title={connected ? 'Realtime connected' : 'Realtime disconnected — falling back to polling'}
             >
-              {connected ? <Wifi className="h-3.5 w-3.5 text-emerald-600" /> : <WifiOff className="h-3.5 w-3.5 text-amber-600" />}
-              <Radio className="h-3 w-3 text-stone-400" />
+              {connected ? (
+                <Wifi className="h-3.5 w-3.5 text-emerald-500" />
+              ) : (
+                <WifiOff className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+              )}
             </div>
 
             {branches.filter((b) => b.accessible).length > 0 && (
-              <select
-                value={activeBranchId ?? ''}
-                onChange={(e) => switchBranch(e.target.value)}
-                className="text-xs border border-stone-300 rounded-md px-2 py-1 bg-white"
-              >
-                {branches.filter((b) => b.accessible).map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={activeBranchId ?? ''}
+                  onChange={(e) => setActiveBranchId(e.target.value)}
+                  className="appearance-none text-xs border border-border/60 rounded-md pl-2.5 pr-7 py-1.5 bg-card text-foreground cursor-pointer hover:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {branches.filter((b) => b.accessible).map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+              </div>
             )}
 
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-medium leading-tight">{session.user.name}</div>
-              <div className="text-[10px] text-stone-500 leading-tight">{ROLE_LABEL[role]}</div>
+            <ThemeToggle />
+
+            <div className="flex items-center gap-2 pl-2 ml-1 border-l border-border/60">
+              <div className="text-right hidden sm:block">
+                <div className="text-xs font-medium leading-tight">{session.user.name}</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">{ROLE_LABEL[role]}</div>
+              </div>
+              <span className={`text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded ${ROLE_BADGE[role] ?? 'bg-muted text-muted-foreground'}`}>
+                {role}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                title="Sign out"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="h-8 px-2"
-              title="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </header>
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-6">
-        {/* Realtime tick is passed as a hidden context via a data attribute so
-            children that want to refetch on realtime events can read it. We
-            also expose branch + role via context below. */}
         <AppContext.Provider value={{ activeBranchId, role, userId: session.user.id, realtimeTick }}>
           {children}
         </AppContext.Provider>
       </main>
 
-      <footer className="border-t border-stone-200 bg-white mt-auto">
-        <div className="mx-auto max-w-7xl px-4 py-3 text-xs text-stone-500 flex flex-wrap items-center gap-x-4 gap-y-1 justify-between">
+      <footer className="border-t border-border/60 bg-card/50 mt-auto">
+        <div className="mx-auto max-w-7xl px-4 py-3 text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 justify-between">
           <span>Meshkī · Restaurant platform · Currency: Toman</span>
-          <span>Tenant-isolated · Role-gated · Real-time over WebSocket</span>
+          <span className="hidden sm:inline">Tenant-isolated · Role-gated · Real-time over WebSocket</span>
         </div>
       </footer>
     </div>

@@ -61,7 +61,7 @@ Then open `http://localhost:3000` and log in with any demo account above.
 
 ### Environment
 
-`.env` (already in the repo for dev — **rotate these for any real deployment**):
+`.env.example` is committed with placeholders. Copy it to `.env` and fill in real values:
 
 ```
 DATABASE_URL=file:./db/custom.db
